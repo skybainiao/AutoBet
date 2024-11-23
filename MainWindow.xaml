@@ -1,7 +1,7 @@
 ﻿<Window x:Class="AutoBet.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AutoBet" Height="800" Width="1400" MinHeight="900" MinWidth="1000">
+        Title="AutoBet" Height="900" Width="1400" MinHeight="900" MinWidth="1000">
     <Grid>
         <TabControl>
             <!-- 足球 Tab -->
@@ -48,6 +48,9 @@
                                                             <DataTrigger Binding="{Binding IsBound}" Value="True">
                                                                 <Setter Property="Background" Value="LightCoral"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSimilar}" Value="True">
+                                                                <Setter Property="Background" Value="LightGreen"/>
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </ListView.ItemContainerStyle>
@@ -85,6 +88,9 @@
                                                             <DataTrigger Binding="{Binding IsBound}" Value="True">
                                                                 <Setter Property="Background" Value="LightCoral"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSimilar}" Value="True">
+                                                                <Setter Property="Background" Value="LightGreen"/>
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </ListView.ItemContainerStyle>
@@ -104,41 +110,44 @@
                                             </Grid.RowDefinitions>
                                             <!-- 提交和删除按钮放在右上角 -->
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5">
+                                                <Button Content="自动绑定" Width="75" Height="25" Click="AutoBind_Click" Margin="0,0,5,0"/>
                                                 <Button Content="提交" Width="75" Height="25" Click="SubmitBoundMatches_Click" Margin="0,0,5,0"/>
                                                 <Button Content="删除" Width="75" Height="25" Click="DeleteBoundMatch_Click"/>
                                             </StackPanel>
                                             <!-- 已绑定比赛列表 -->
-                                            <ListView Name="BoundMatchesListView" SelectionMode="Single" Grid.Row="1" Height="300">
-                                                <ListView.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border BorderBrush="Gray" BorderThickness="1" Margin="5" Padding="5">
-                                                            <StackPanel>
-                                                                <!-- 联赛对比 -->
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="1网联赛：" FontWeight="Bold" Width="80"/>
-                                                                    <TextBlock Text="{Binding Match1.League}" Width="150"/>
-                                                                    <TextBlock Text="2网联赛：" FontWeight="Bold" Width="80"/>
-                                                                    <TextBlock Text="{Binding Match2.League}" Width="150"/>
+                                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                                <ListView Name="BoundMatchesListView" SelectionMode="Single" Height="350">
+                                                    <ListView.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border BorderBrush="Gray" BorderThickness="1" Margin="5" Padding="5">
+                                                                <StackPanel>
+                                                                    <!-- 联赛对比 -->
+                                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                                        <TextBlock Text="1网联赛：" FontWeight="Bold" Width="100"/>
+                                                                        <TextBlock Text="{Binding Match1.League}" Width="150"/>
+                                                                        <TextBlock Text="2网联赛：" FontWeight="Bold" Width="100"/>
+                                                                        <TextBlock Text="{Binding Match2.League}" Width="150"/>
+                                                                    </StackPanel>
+                                                                    <!-- 主队对比 -->
+                                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                                        <TextBlock Text="1网主队：" FontWeight="Bold" Width="100"/>
+                                                                        <TextBlock Text="{Binding Match1.HomeTeam}" Width="150"/>
+                                                                        <TextBlock Text="2网主队：" FontWeight="Bold" Width="100"/>
+                                                                        <TextBlock Text="{Binding Match2.HomeTeam}" Width="150"/>
+                                                                    </StackPanel>
+                                                                    <!-- 客队对比 -->
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="1网客队：" FontWeight="Bold" Width="100"/>
+                                                                        <TextBlock Text="{Binding Match1.AwayTeam}" Width="150"/>
+                                                                        <TextBlock Text="2网客队：" FontWeight="Bold" Width="100"/>
+                                                                        <TextBlock Text="{Binding Match2.AwayTeam}" Width="150"/>
+                                                                    </StackPanel>
                                                                 </StackPanel>
-                                                                <!-- 主队对比 -->
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="1网主队：" FontWeight="Bold" Width="80"/>
-                                                                    <TextBlock Text="{Binding Match1.HomeTeam}" Width="150"/>
-                                                                    <TextBlock Text="2网主队：" FontWeight="Bold" Width="80"/>
-                                                                    <TextBlock Text="{Binding Match2.HomeTeam}" Width="150"/>
-                                                                </StackPanel>
-                                                                <!-- 客队对比 -->
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="1网客队：" FontWeight="Bold" Width="80"/>
-                                                                    <TextBlock Text="{Binding Match1.AwayTeam}" Width="150"/>
-                                                                    <TextBlock Text="2网客队：" FontWeight="Bold" Width="80"/>
-                                                                    <TextBlock Text="{Binding Match2.AwayTeam}" Width="150"/>
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ListView.ItemTemplate>
-                                            </ListView>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ListView.ItemTemplate>
+                                                </ListView>
+                                            </ScrollViewer>
                                         </Grid>
                                     </GroupBox>
 
@@ -203,14 +212,14 @@
                                             <Border BorderBrush="Gray" BorderThickness="1" Margin="5" Padding="5">
                                                 <StackPanel>
                                                     <!-- 联赛对比 -->
-                                                    <StackPanel Orientation="Horizontal">
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                                         <TextBlock Text="1网联赛：" FontWeight="Bold" Width="80"/>
                                                         <TextBlock Text="{Binding Match1.League}" Width="150"/>
                                                         <TextBlock Text="2网联赛：" FontWeight="Bold" Width="80"/>
                                                         <TextBlock Text="{Binding Match2.League}" Width="150"/>
                                                     </StackPanel>
                                                     <!-- 主队对比 -->
-                                                    <StackPanel Orientation="Horizontal">
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                                         <TextBlock Text="1网主队：" FontWeight="Bold" Width="80"/>
                                                         <TextBlock Text="{Binding Match1.HomeTeam}" Width="150"/>
                                                         <TextBlock Text="2网主队：" FontWeight="Bold" Width="80"/>

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -235,7 +236,7 @@ namespace AutoBet
             if (Match1ListView.SelectedItem is MatchInfo match1 && Match2ListView.SelectedItem is MatchInfo match2)
             {
                 // 检查是否已经绑定
-                if (_pairedMatches.Any(pm => (MatchesAreEqual(pm.Match1, match1) && MatchesAreEqual(pm.Match2, match2))))
+                if (_pairedMatches.Any(pm => MatchesAreEqual(pm.Match1, match1) && MatchesAreEqual(pm.Match2, match2)))
                 {
                     MessageBox.Show("这两场比赛已经绑定过了。");
                     return;
@@ -408,6 +409,97 @@ namespace AutoBet
             {
                 MessageBox.Show("请先选择要删除的绑定比赛。");
             }
+        }
+
+        #endregion
+
+        #region 自动绑定
+
+        // 自动绑定按钮点击事件
+        private void AutoBind_Click(object sender, RoutedEventArgs e)
+        {
+            // 获取所有未绑定的 Match1 和 Match2
+            var availableMatch1 = LoadAllMatch1Data();
+            var availableMatch2 = LoadAllMatch2Data();
+
+            var autoBoundMatches = new List<PairedMatchInfo>();
+
+            foreach (var m1 in availableMatch1)
+            {
+                foreach (var m2 in availableMatch2)
+                {
+                    if (!_pairedMatches.Any(pm => MatchesAreEqual(pm.Match1, m1) && MatchesAreEqual(pm.Match2, m2)))
+                    {
+                        if (AreMatchesSimilar(m1, m2))
+                        {
+                            autoBoundMatches.Add(new PairedMatchInfo { Match1 = m1, Match2 = m2 });
+                        }
+                    }
+                }
+            }
+
+            if (autoBoundMatches.Any())
+            {
+                foreach (var pair in autoBoundMatches)
+                {
+                    _pairedMatches.Add(pair);
+                    pair.Match1.IsBound = true;
+                    pair.Match2.IsBound = true;
+                }
+
+                BoundMatchesListView.ItemsSource = null;
+                BoundMatchesListView.ItemsSource = _pairedMatches;
+
+                MessageBox.Show($"已自动绑定 {autoBoundMatches.Count} 场比赛。");
+            }
+            else
+            {
+                MessageBox.Show("没有符合自动绑定条件的比赛。");
+            }
+        }
+
+        // 加载所有 Match1 数据（包括已绑定和未绑定）
+        private List<MatchInfo> LoadAllMatch1Data()
+        {
+            var currentView = Match1ListView.ItemsSource as CollectionView;
+            if (currentView != null)
+            {
+                return currentView.Cast<MatchInfo>().ToList();
+            }
+            return new List<MatchInfo>();
+        }
+
+        // 加载所有 Match2 数据（包括已绑定和未绑定）
+        private List<MatchInfo> LoadAllMatch2Data()
+        {
+            var currentView = Match2ListView.ItemsSource as CollectionView;
+            if (currentView != null)
+            {
+                return currentView.Cast<MatchInfo>().ToList();
+            }
+            return new List<MatchInfo>();
+        }
+
+        // 判断两个比赛是否相似
+        private bool AreMatchesSimilar(MatchInfo m1, MatchInfo m2)
+        {
+            // 使用简单的词汇匹配逻辑
+            // 可以根据需求调整匹配算法，例如使用Levenshtein距离或其他文本相似性算法
+            bool leagueMatch = WordsContainMatch(m1.League, m2.League);
+            bool homeTeamMatch = WordsContainMatch(m1.HomeTeam, m2.HomeTeam);
+            bool awayTeamMatch = WordsContainMatch(m1.AwayTeam, m2.AwayTeam);
+
+            // 定义相似的条件：联赛、主队和客队都有部分匹配
+            return leagueMatch && homeTeamMatch && awayTeamMatch;
+        }
+
+        // 检查两个字符串是否有共同的单词
+        private bool WordsContainMatch(string str1, string str2)
+        {
+            var words1 = Regex.Split(str1.ToLower(), @"\W+").Where(w => w.Length > 0).ToList();
+            var words2 = Regex.Split(str2.ToLower(), @"\W+").Where(w => w.Length > 0).ToList();
+
+            return words1.Intersect(words2).Any();
         }
 
         #endregion
