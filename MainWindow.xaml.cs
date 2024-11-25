@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Threading;
+using System.Text;
 
 namespace AutoBet
 {
@@ -34,7 +35,11 @@ namespace AutoBet
 
             match2RefreshTimer = new DispatcherTimer();
             match2RefreshTimer.Tick += Match2RefreshTimer_Tick;
+
+            // 加载绑定记录
+            Loaded += async (s, e) => await LoadBindingRecords();
         }
+
 
         #region 刷新数据按钮点击事件
 
@@ -379,11 +384,171 @@ namespace AutoBet
         #region 提交绑定数据
 
         // 提交绑定数据按钮点击事件
-        private void SubmitBoundMatches_Click(object sender, RoutedEventArgs e)
+        private async void SubmitBoundMatches_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: 实现将 _pairedMatches 发送到 Java 服务器的逻辑
-            MessageBox.Show("提交按钮已点击。");
+            if (!_pairedMatches.Any())
+            {
+                MessageBox.Show("没有绑定的数据可提交。");
+                return;
+            }
+
+            try
+            {
+                using var client = new HttpClient();
+                client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
+
+                foreach (var pairedMatch in _pairedMatches)
+                {
+                    var bindingDto = new BindingDTO
+                    {
+                        League1Name = pairedMatch.Match1.League,
+                        League2Name = pairedMatch.Match2.League,
+                        HomeTeam1Name = pairedMatch.Match1.HomeTeam,
+                        HomeTeam2Name = pairedMatch.Match2.HomeTeam,
+                        AwayTeam1Name = pairedMatch.Match1.AwayTeam,
+                        AwayTeam2Name = pairedMatch.Match2.AwayTeam
+                    };
+
+                    var json = JsonSerializer.Serialize(bindingDto, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+
+                    // 添加日志输出
+                    Console.WriteLine("Serialized JSON: " + json);
+                    // 或者在 WPF 中使用 Dispatcher
+                    Dispatcher.Invoke(() => Console.WriteLine("Serialized JSON: " + json));
+
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync("bindings", content);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show($"提交绑定失败: {response.ReasonPhrase}");
+                        return;
+                    }
+                }
+
+                MessageBox.Show("所有绑定数据已成功提交。");
+
+                // 清空本地绑定列表并刷新已绑定比赛列表
+                _pairedMatches.Clear();
+                BoundMatchesListView.ItemsSource = null;
+                BoundMatchesListView.ItemsSource = _pairedMatches;
+
+                // 刷新绑定记录页面
+                await LoadBindingRecords();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"提交绑定时发生错误: {ex.Message}");
+            }
         }
+
+
+
+
+
+
+        private async Task LoadBindingRecords()
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
+
+                var response = await client.GetAsync("bindings");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var bindings = JsonSerializer.Deserialize<List<BindingRecordDTO>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    BindingRecordsListView.ItemsSource = bindings;
+                }
+                else
+                {
+                    MessageBox.Show($"获取绑定记录失败: {response.ReasonPhrase}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"获取绑定记录时发生错误: {ex.Message}");
+            }
+        }
+
+
+
+        private async void DeleteBindingRecord_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button deleteButton && deleteButton.Tag is long bindingId)
+            {
+                var confirmResult = MessageBox.Show("您确定要删除选中的绑定记录吗？", "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirmResult != MessageBoxResult.Yes)
+                    return;
+
+                try
+                {
+                    using var client = new HttpClient();
+                    client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
+
+                    var response = await client.DeleteAsync($"bindings/{bindingId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("已成功删除绑定记录。");
+
+                        // 刷新绑定记录页面
+                        await LoadBindingRecords();
+
+                        // 更新本地绑定列表，取消绑定状态
+                        // 获取已删除的 BindingRecordDTO
+                        var deletedBinding = ((List<BindingRecordDTO>)BindingRecordsListView.ItemsSource)
+                                              .FirstOrDefault(b => b.Id == bindingId);
+
+                        if (deletedBinding != null)
+                        {
+                            var bindingToRemove = _pairedMatches.FirstOrDefault(pm =>
+                                pm.Match1.League == deletedBinding.League1Name &&
+                                pm.Match2.League == deletedBinding.League2Name &&
+                                pm.Match1.HomeTeam == deletedBinding.HomeTeam1Name &&
+                                pm.Match2.HomeTeam == deletedBinding.HomeTeam2Name &&
+                                pm.Match1.AwayTeam == deletedBinding.AwayTeam1Name &&
+                                pm.Match2.AwayTeam == deletedBinding.AwayTeam2Name
+                            );
+
+                            if (bindingToRemove != null)
+                            {
+                                bindingToRemove.Match1.IsBound = false;
+                                bindingToRemove.Match2.IsBound = false;
+                                _pairedMatches.Remove(bindingToRemove);
+                                BoundMatchesListView.ItemsSource = null;
+                                BoundMatchesListView.ItemsSource = _pairedMatches;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show($"删除绑定记录失败: {response.ReasonPhrase}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"删除绑定记录时发生错误: {ex.Message}");
+                }
+            }
+            else
+            {
+                MessageBox.Show("请先选择要删除的绑定记录。");
+            }
+        }
+
+
+
 
         #endregion
 
@@ -517,4 +682,12 @@ namespace AutoBet
 
         #endregion
     }
+
+
+
+
+
+
+
+
 }

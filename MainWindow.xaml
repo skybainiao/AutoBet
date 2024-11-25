@@ -1,7 +1,7 @@
 ﻿<Window x:Class="AutoBet.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AutoBet" Height="900" Width="1400" MinHeight="900" MinWidth="1000">
+        Title="AutoBet" Height="900" Width="1600" MinHeight="900" MinWidth="1000">
     <Grid>
         <TabControl>
             <!-- 足球 Tab -->
@@ -35,9 +35,9 @@
                                             <ListView Name="Match1ListView" Grid.Row="1" SelectionMode="Single" SelectionChanged="Match1ListView_SelectionChanged" MaxHeight="300">
                                                 <ListView.View>
                                                     <GridView>
-                                                        <GridViewColumn Header="联赛" DisplayMemberBinding="{Binding League}" Width="150"/>
-                                                        <GridViewColumn Header="主队" DisplayMemberBinding="{Binding HomeTeam}" Width="150"/>
-                                                        <GridViewColumn Header="客队" DisplayMemberBinding="{Binding AwayTeam}" Width="150"/>
+                                                        <GridViewColumn Header="联赛" DisplayMemberBinding="{Binding League}" Width="280"/>
+                                                        <GridViewColumn Header="主队" DisplayMemberBinding="{Binding HomeTeam}" Width="250"/>
+                                                        <GridViewColumn Header="客队" DisplayMemberBinding="{Binding AwayTeam}" Width="250"/>
                                                         <GridViewColumn Header="比分" DisplayMemberBinding="{Binding DisplayScore}" Width="100"/>
                                                     </GridView>
                                                 </ListView.View>
@@ -75,9 +75,9 @@
                                             <ListView Name="Match2ListView" Grid.Row="1" SelectionMode="Single" SelectionChanged="Match2ListView_SelectionChanged" MaxHeight="300">
                                                 <ListView.View>
                                                     <GridView>
-                                                        <GridViewColumn Header="联赛" DisplayMemberBinding="{Binding League}" Width="150"/>
-                                                        <GridViewColumn Header="主队" DisplayMemberBinding="{Binding HomeTeam}" Width="150"/>
-                                                        <GridViewColumn Header="客队" DisplayMemberBinding="{Binding AwayTeam}" Width="150"/>
+                                                        <GridViewColumn Header="联赛" DisplayMemberBinding="{Binding League}" Width="280"/>
+                                                        <GridViewColumn Header="主队" DisplayMemberBinding="{Binding HomeTeam}" Width="250"/>
+                                                        <GridViewColumn Header="客队" DisplayMemberBinding="{Binding AwayTeam}" Width="250"/>
                                                         <GridViewColumn Header="比分" DisplayMemberBinding="{Binding DisplayScore}" Width="100"/>
                                                     </GridView>
                                                 </ListView.View>
@@ -102,7 +102,7 @@
                                 <!-- 右侧：已绑定比赛及对比信息 -->
                                 <StackPanel Grid.Column="1" Margin="10" VerticalAlignment="Top">
                                     <!-- 已绑定比赛 -->
-                                    <GroupBox Header="已绑定比赛" Height="350" Margin="0,0,0,20">
+                                    <GroupBox Header="已绑定比赛" Height="350" Width="600" Margin="0,0,0,20">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -160,13 +160,13 @@
                                         <StackPanel Orientation="Vertical" Margin="0,0,0,5">
                                             <TextBlock Text="联赛" FontWeight="Bold" TextAlignment="Center" Margin="0,0,0,5" />
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                                <TextBlock Text="联赛:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
-                                                <TextBlock Name="LeagueName1" Text="-" Width="310" TextAlignment="Center" Background="LightBlue" Padding="5" />
+                                                <TextBlock Text="1网联赛:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
+                                                <TextBlock Name="LeagueName1" Text="-" Width="390" TextAlignment="Center" Background="LightBlue" Padding="5" />
                                             </StackPanel>
 
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="联赛:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
-                                                <TextBlock Name="LeagueName2" Text="-" Width="310" TextAlignment="Center" Background="LightGreen" Padding="5" />
+                                                <TextBlock Text="2网联赛:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
+                                                <TextBlock Name="LeagueName2" Text="-" Width="390" TextAlignment="Center" Background="LightGreen" Padding="5" />
                                             </StackPanel>
                                         </StackPanel>
 
@@ -174,12 +174,12 @@
                                         <StackPanel Orientation="Vertical" Margin="0,0,0,5">
                                             <TextBlock Text="主队" FontWeight="Bold" TextAlignment="Center" Margin="0,10,0,5" />
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10" >
-                                                <TextBlock Text="主队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
-                                                <TextBlock Name="HomeTeam1" Text="-" Width="310" TextAlignment="Center" Background="LightBlue" Padding="5" />
+                                                <TextBlock Text="1网主队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
+                                                <TextBlock Name="HomeTeam1" Text="-" Width="390" TextAlignment="Center" Background="LightBlue" Padding="5" />
                                             </StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="主队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
-                                                <TextBlock Name="HomeTeam2" Text="-" Width="310" TextAlignment="Center" Background="LightGreen" Padding="5" />
+                                                <TextBlock Text="2网主队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
+                                                <TextBlock Name="HomeTeam2" Text="-" Width="390" TextAlignment="Center" Background="LightGreen" Padding="5" />
                                             </StackPanel>
                                         </StackPanel>
 
@@ -187,12 +187,12 @@
                                         <StackPanel Orientation="Vertical" Margin="0,0,0,10">
                                             <TextBlock Text="客队" FontWeight="Bold" TextAlignment="Center" Margin="0,10,0,5" />
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                                <TextBlock Text="客队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
-                                                <TextBlock Name="AwayTeam1" Text="-" Width="310" TextAlignment="Center" Background="LightBlue" Padding="5" />
+                                                <TextBlock Text="1网客队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
+                                                <TextBlock Name="AwayTeam1" Text="-" Width="390" TextAlignment="Center" Background="LightBlue" Padding="5" />
                                             </StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="客队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
-                                                <TextBlock Name="AwayTeam2" Text="-" Width="310" TextAlignment="Center" Background="LightGreen" Padding="5" />
+                                                <TextBlock Text="2网客队:" FontWeight="Bold" Width="100" TextAlignment="Left" Margin="0,0,10,0" />
+                                                <TextBlock Name="AwayTeam2" Text="-" Width="390" TextAlignment="Center" Background="LightGreen" Padding="5" />
                                             </StackPanel>
                                         </StackPanel>
 
@@ -206,37 +206,31 @@
                         <!-- 绑定记录子标签 -->
                         <TabItem Header="绑定记录">
                             <Grid Margin="10">
-                                <ListView Name="BindingRecordsListView" SelectionMode="Single">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="Gray" BorderThickness="1" Margin="5" Padding="5">
-                                                <StackPanel>
-                                                    <!-- 联赛对比 -->
-                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                                        <TextBlock Text="1网联赛：" FontWeight="Bold" Width="80"/>
-                                                        <TextBlock Text="{Binding Match1.League}" Width="150"/>
-                                                        <TextBlock Text="2网联赛：" FontWeight="Bold" Width="80"/>
-                                                        <TextBlock Text="{Binding Match2.League}" Width="150"/>
-                                                    </StackPanel>
-                                                    <!-- 主队对比 -->
-                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                                        <TextBlock Text="1网主队：" FontWeight="Bold" Width="80"/>
-                                                        <TextBlock Text="{Binding Match1.HomeTeam}" Width="150"/>
-                                                        <TextBlock Text="2网主队：" FontWeight="Bold" Width="80"/>
-                                                        <TextBlock Text="{Binding Match2.HomeTeam}" Width="150"/>
-                                                    </StackPanel>
-                                                    <!-- 客队对比 -->
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="1网客队：" FontWeight="Bold" Width="80"/>
-                                                        <TextBlock Text="{Binding Match1.AwayTeam}" Width="150"/>
-                                                        <TextBlock Text="2网客队：" FontWeight="Bold" Width="80"/>
-                                                        <TextBlock Text="{Binding Match2.AwayTeam}" Width="150"/>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
+                                <!-- MainWindow.xaml -->
+
+                                <!-- 已绑定比赛记录列表 -->
+                                <ListView Name="BindingRecordsListView" SelectionMode="Single" Margin="0,0,0,10">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="ID" DisplayMemberBinding="{Binding Id}" Width="50"/>
+                                            <GridViewColumn Header="联赛1" DisplayMemberBinding="{Binding League1Name}" Width="250"/>
+                                            <GridViewColumn Header="联赛2" DisplayMemberBinding="{Binding League2Name}" Width="250"/>
+                                            <GridViewColumn Header="队伍1" DisplayMemberBinding="{Binding HomeTeam1Name}" Width="200"/>
+                                            <GridViewColumn Header="队伍2" DisplayMemberBinding="{Binding HomeTeam2Name}" Width="200"/>
+                                            <GridViewColumn Header="队伍1" DisplayMemberBinding="{Binding AwayTeam1Name}" Width="200"/>
+                                            <GridViewColumn Header="队伍2" DisplayMemberBinding="{Binding AwayTeam2Name}" Width="200"/>
+                                            <!-- 删除按钮列 -->
+                                            <GridViewColumn Header="操作" Width="200">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="删除" Click="DeleteBindingRecord_Click" Tag="{Binding Id}" Background="Red" Foreground="White" Width="100"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                        </GridView>
+                                    </ListView.View>
                                 </ListView>
+
                             </Grid>
                         </TabItem>
 
