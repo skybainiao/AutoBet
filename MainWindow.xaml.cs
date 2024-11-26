@@ -144,7 +144,7 @@ namespace AutoBet
             }
         }
 
-        // 获取服务器3的Match2数据
+        // 获取服务器2的Match2数据
         private async Task<List<MatchInfo>> FetchMatch2Data()
         {
             try
@@ -347,54 +347,49 @@ namespace AutoBet
                 using var client = new HttpClient();
                 client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
 
-                foreach (var pairedMatch in _pairedMatches)
+                // 构造 BindingDTO 列表
+                var bindingDtos = _pairedMatches.Select(pm => new BindingDTO
                 {
-                    var bindingDto = new BindingDTO
-                    {
-                        League1Name = pairedMatch.Match1.League,
-                        League2Name = pairedMatch.Match2.League,
-                        HomeTeam1Name = pairedMatch.Match1.HomeTeam,
-                        HomeTeam2Name = pairedMatch.Match2.HomeTeam,
-                        AwayTeam1Name = pairedMatch.Match1.AwayTeam,
-                        AwayTeam2Name = pairedMatch.Match2.AwayTeam
-                    };
+                    League1Name = pm.Match1.League,
+                    League2Name = pm.Match2.League,
+                    HomeTeam1Name = pm.Match1.HomeTeam,
+                    HomeTeam2Name = pm.Match2.HomeTeam,
+                    AwayTeam1Name = pm.Match1.AwayTeam,
+                    AwayTeam2Name = pm.Match2.AwayTeam
+                }).ToList();
 
-                    var json = JsonSerializer.Serialize(bindingDto, new JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                    });
+                var json = JsonSerializer.Serialize(bindingDtos, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
 
-                    // 添加日志输出
-                    Console.WriteLine("Serialized JSON: " + json);
-                    // 或者在 WPF 中使用 Dispatcher
-                    Dispatcher.Invoke(() => Console.WriteLine("Serialized JSON: " + json));
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await client.PostAsync("bindings", content);
 
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                if (response.IsSuccessStatusCode)
+                {
+                    var resultMessage = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"提交绑定成功！\n{resultMessage}");
 
-                    var response = await client.PostAsync("bindings", content);
+                    // 清空本地绑定列表并刷新已绑定比赛列表
+                    _pairedMatches.Clear();
+                    BoundMatchesListView.ItemsSource = null;
+                    BoundMatchesListView.ItemsSource = _pairedMatches;
 
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show($"提交绑定失败: {response.ReasonPhrase}");
-                        return;
-                    }
+                    // 刷新绑定记录页面
+                    await LoadBindingRecords();
                 }
-
-                MessageBox.Show("所有绑定数据已成功提交。");
-
-                // 清空本地绑定列表并刷新已绑定比赛列表
-                _pairedMatches.Clear();
-                BoundMatchesListView.ItemsSource = null;
-                BoundMatchesListView.ItemsSource = _pairedMatches;
-
-                // 刷新绑定记录页面
-                await LoadBindingRecords();
+                else
+                {
+                    MessageBox.Show($"提交绑定失败: {response.ReasonPhrase}");
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"提交绑定时发生错误: {ex.Message}");
             }
         }
+
 
 
 
