@@ -18,7 +18,7 @@ namespace AutoBet
     public partial class MainWindow : Window
     {
         private const string Server1Url = "http://localhost:8080/broadcast/matches/basic";
-        private const string Server3Url = "http://localhost:8080/broadcast/matches2/basic";
+        private const string Server2Url = "http://localhost:8080/broadcast/matches2/basic";
 
         private readonly List<PairedMatchInfo> _pairedMatches = new();
 
@@ -150,7 +150,7 @@ namespace AutoBet
             try
             {
                 using var client = new HttpClient();
-                var response = await client.GetStringAsync(Server3Url);
+                var response = await client.GetStringAsync(Server2Url);
 
                 var data = JsonSerializer.Deserialize<List<Match2BasicDTO>>(response, new JsonSerializerOptions
                 {
@@ -178,56 +178,6 @@ namespace AutoBet
             {
                 MessageBox.Show($"Error fetching Match2 data: {ex.Message}");
                 return null;
-            }
-        }
-
-        #endregion
-
-        #region ListView 选择变化事件
-
-        // Match1 ListView 选择变化
-        private void Match1ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            UpdateComparisonTexts();
-        }
-
-        // Match2 ListView 选择变化
-        private void Match2ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            UpdateComparisonTexts();
-        }
-
-        #endregion
-
-        #region 更新对比信息
-
-        // 更新比赛对比信息的文本
-        private void UpdateComparisonTexts()
-        {
-            if (Match1ListView.SelectedItem is MatchInfo selectedMatch1)
-            {
-                LeagueName1.Text = selectedMatch1.League;
-                HomeTeam1.Text = selectedMatch1.HomeTeam;
-                AwayTeam1.Text = selectedMatch1.AwayTeam;
-            }
-            else
-            {
-                LeagueName1.Text = "-";
-                HomeTeam1.Text = "-";
-                AwayTeam1.Text = "-";
-            }
-
-            if (Match2ListView.SelectedItem is MatchInfo selectedMatch2)
-            {
-                LeagueName2.Text = selectedMatch2.League;
-                HomeTeam2.Text = selectedMatch2.HomeTeam;
-                AwayTeam2.Text = selectedMatch2.AwayTeam;
-            }
-            else
-            {
-                LeagueName2.Text = "-";
-                HomeTeam2.Text = "-";
-                AwayTeam2.Text = "-";
             }
         }
 
@@ -568,7 +518,6 @@ namespace AutoBet
                 selectedPair.Match1.IsBound = false;
                 selectedPair.Match2.IsBound = false;
 
-                MessageBox.Show("已删除选中的绑定比赛。");
             }
             else
             {
