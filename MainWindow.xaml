@@ -19,7 +19,7 @@
                                 <!-- 左侧：Match1 和 Match2 数据 -->
                                 <StackPanel Grid.Column="0" Margin="10">
                                     <!-- 1网滚球 -->
-                                    <GroupBox Header="1网滚球" Height="380" Margin="0,0,0,0">
+                                    <GroupBox Header="A网滚球" Height="380" Margin="0,0,0,0">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -27,6 +27,8 @@
                                             </Grid.RowDefinitions>
                                             <!-- 刷新按钮和选择刷新时间按钮 -->
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5">
+                                                <Button Content="选择数据源" Click="ShowDataSourceMenu1" Width="120" Height="25" Margin="0,0,5,0"/>
+
                                                 <Button Content="刷新" Click="RefreshMatch1Data" Width="75" Height="25" Margin="0,0,5,0"/>
                                                 <!-- 设置刷新时间按钮 -->
                                                 <Button Content="设置刷新时间 ▼" Width="120" Height="25" Click="ShowMatch1RefreshMenu"/>
@@ -59,7 +61,7 @@
                                     </GroupBox>
 
                                     <!-- 2网滚球 -->
-                                    <GroupBox Header="2网滚球" Height="380">
+                                    <GroupBox Header="B网滚球" Height="380">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -67,6 +69,8 @@
                                             </Grid.RowDefinitions>
                                             <!-- 刷新按钮和选择刷新时间按钮 -->
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5">
+                                                <Button Content="选择数据源" Click="ShowDataSourceMenu2" Width="120" Height="25" Margin="0,0,5,0"/>
+
                                                 <Button Content="刷新" Click="RefreshMatch2Data" Width="75" Height="25" Margin="0,0,5,0"/>
                                                 <!-- 设置刷新时间按钮 -->
                                                 <Button Content="设置刷新时间 ▼" Width="120" Height="25" Click="ShowMatch2RefreshMenu"/>

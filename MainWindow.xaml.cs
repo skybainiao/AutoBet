@@ -19,6 +19,9 @@ namespace AutoBet
     {
         private const string Server1Url = "http://localhost:8080/broadcast/matches/basic";
         private const string Server2Url = "http://localhost:8080/broadcast/matches2/basic";
+        private string selectedDataSource1 = null;
+        private string selectedDataSource2 = null;
+
 
         private readonly List<PairedMatchInfo> _pairedMatches = new();
 
@@ -46,13 +49,13 @@ namespace AutoBet
         // 刷新 Match1 数据（手动刷新）
         private async void RefreshMatch1Data(object sender, RoutedEventArgs e)
         {
-            await LoadMatch1Data();
+            await LoadMatch1Data(0);
         }
 
         // 刷新 Match2 数据（手动刷新）
         private async void RefreshMatch2Data(object sender, RoutedEventArgs e)
         {
-            await LoadMatch2Data();
+            await LoadMatch2Data(0);
         }
 
         #endregion
@@ -60,9 +63,18 @@ namespace AutoBet
         #region 数据加载方法
 
         // 加载 Match1 数据
-        private async Task LoadMatch1Data()
+        private async Task LoadMatch1Data(int t)
         {
-            var match1Data = await FetchMatch1Data();
+            if (string.IsNullOrEmpty(selectedDataSource1))
+            {
+                MessageBox.Show("请先在第一个数据框中选择数据源。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // 根据选择的数据源决定使用哪个服务器的URL
+            string serverUrl = selectedDataSource1 == "1网滚球数据" ? Server1Url : Server2Url;
+
+            var match1Data = await FetchMatch1Data(serverUrl);
             if (match1Data != null)
             {
                 // 设置 IsBound based on _pairedMatches
@@ -74,19 +86,50 @@ namespace AutoBet
                     }
                 }
 
+                // 更新 ListView 数据源
                 var collectionView = new CollectionViewSource
                 {
                     Source = match1Data
                 };
                 collectionView.GroupDescriptions.Add(new PropertyGroupDescription("League"));
                 Match1ListView.ItemsSource = collectionView.View;
+
+                if (t == 0)
+                {
+                    // 弹窗显示加载数据数量
+                    if (match1Data.Count > 0)
+                    {
+                        MessageBox.Show($"A网滚球比赛加载完成，共加载 {match1Data.Count} 场比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("A网目前没有滚球比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+            else
+            {
+                if (t == 0)
+                {
+                    MessageBox.Show("A网数据加载失败。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
+
         // 加载 Match2 数据
-        private async Task LoadMatch2Data()
+        private async Task LoadMatch2Data(int t)
         {
-            var match2Data = await FetchMatch2Data();
+            if (string.IsNullOrEmpty(selectedDataSource2))
+            {
+                MessageBox.Show("请先在第二个数据框中选择数据源。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // 根据选择的数据源决定使用哪个服务器的URL
+            string serverUrl = selectedDataSource2 == "1网滚球数据" ? Server1Url : Server2Url;
+
+            var match2Data = await FetchMatch2Data(serverUrl);
             if (match2Data != null)
             {
                 // 设置 IsBound based on _pairedMatches
@@ -98,27 +141,80 @@ namespace AutoBet
                     }
                 }
 
+                // 更新 ListView 数据源
                 var collectionView = new CollectionViewSource
                 {
                     Source = match2Data
                 };
                 collectionView.GroupDescriptions.Add(new PropertyGroupDescription("League"));
                 Match2ListView.ItemsSource = collectionView.View;
+
+                if (t == 0)
+                {
+                    // 弹窗显示加载数据数量
+                    if (match2Data.Count > 0)
+                    {
+                        MessageBox.Show($"B网滚球比赛加载完成，共加载 {match2Data.Count} 场比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("B网目前没有滚球比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+            else
+            {
+                if (t == 0)
+                {
+                    MessageBox.Show("B网数据加载失败。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
-        // 获取服务器1的Match1数据
-        private async Task<List<MatchInfo>> FetchMatch1Data()
+
+        // 获取服务器1或2的 Match1 数据
+        private async Task<List<MatchInfo>> FetchMatch1Data(string serverUrl)
         {
             try
             {
                 using var client = new HttpClient();
-                var response = await client.GetStringAsync(Server1Url);
+                var response = await client.GetStringAsync(serverUrl);
 
-                var data = JsonSerializer.Deserialize<List<MatchBasicDTO>>(response, new JsonSerializerOptions
+                // 解析服务器返回的 JSON 数据
+                var responseJson = JsonDocument.Parse(response);
+                var matchCount = responseJson.RootElement.GetProperty("matchCount").GetInt32();
+                var matches = responseJson.RootElement.GetProperty("matches").ToString();
+
+                
+
+                // 根据数据源解析不同的DTO
+                List<MatchBasicDTO> data;
+                if (serverUrl == Server1Url)
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                    data = JsonSerializer.Deserialize<List<MatchBasicDTO>>(matches, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+                }
+                else
+                {
+                    data = JsonSerializer.Deserialize<List<Match2BasicDTO>>(matches, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                    .Select(dto => new MatchBasicDTO
+                    {
+                        // 映射 Match2BasicDTO 到 MatchBasicDTO
+                        Id = dto.Id,
+                        LeagueName = dto.LeagueName,
+                        MatchTime = dto.MatchTime,
+                        HomeTeam = dto.HomeTeam,
+                        AwayTeam = dto.AwayTeam,
+                        HomeScore = dto.HomeScore,
+                        AwayScore = dto.AwayScore
+                    })
+                    .ToList();
+                }
 
                 var matchList = new List<MatchInfo>();
                 foreach (var match in data ?? new List<MatchBasicDTO>())
@@ -144,18 +240,52 @@ namespace AutoBet
             }
         }
 
-        // 获取服务器2的Match2数据
-        private async Task<List<MatchInfo>> FetchMatch2Data()
+
+
+        // 获取服务器1或2的 Match2 数据
+        private async Task<List<MatchInfo>> FetchMatch2Data(string serverUrl)
         {
             try
             {
                 using var client = new HttpClient();
-                var response = await client.GetStringAsync(Server2Url);
+                var response = await client.GetStringAsync(serverUrl);
 
-                var data = JsonSerializer.Deserialize<List<Match2BasicDTO>>(response, new JsonSerializerOptions
+                // 解析服务器返回的 JSON 数据
+                var responseJson = JsonDocument.Parse(response);
+                var matchCount = responseJson.RootElement.GetProperty("matchCount").GetInt32();
+                var matches = responseJson.RootElement.GetProperty("matches").ToString();
+
+                 
+
+                // 根据数据源解析不同的DTO
+                List<Match2BasicDTO> data;
+                if (serverUrl == Server2Url)
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                    data = JsonSerializer.Deserialize<List<Match2BasicDTO>>(matches, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+                }
+                else
+                {
+                    data = JsonSerializer.Deserialize<List<MatchBasicDTO>>(matches, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                    .Select(dto => new Match2BasicDTO
+                    {
+                        // 映射 MatchBasicDTO 到 Match2BasicDTO
+                        Id = dto.Id,
+                        LeagueName = dto.LeagueName,
+                        MatchTime = dto.MatchTime,
+                        HomeTeam = dto.HomeTeam,
+                        AwayTeam = dto.AwayTeam,
+                        HomeScore = dto.HomeScore,
+                        AwayScore = dto.AwayScore,
+                       // 假设 MatchBasicDTO 没有 InsertedAt 字段，用 MatchTime 代替
+                    })
+                    .ToList();
+                }
 
                 var matchList = new List<MatchInfo>();
                 foreach (var dto in data ?? new List<Match2BasicDTO>())
@@ -181,7 +311,78 @@ namespace AutoBet
             }
         }
 
+
+
         #endregion
+        // 显示数据源选择菜单 for 数据框1
+        private void ShowDataSourceMenu1(object sender, RoutedEventArgs e)
+        {
+            var menu = new ContextMenu();
+
+            var item1 = new MenuItem { Header = "1网滚球数据" };
+            item1.Click += (s, args) =>
+            {
+                selectedDataSource1 = "1网滚球数据";
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "1网滚球数据";
+                }
+                MessageBox.Show("已选择 1网滚球数据 为数据源。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            };
+            menu.Items.Add(item1);
+
+            var item2 = new MenuItem { Header = "2网滚球数据" };
+            item2.Click += (s, args) =>
+            {
+                selectedDataSource1 = "2网滚球数据";
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "2网滚球数据";
+                }
+                MessageBox.Show("已选择 2网滚球数据 为数据源。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            };
+            menu.Items.Add(item2);
+
+            menu.IsOpen = true;
+        }
+
+        // 显示数据源选择菜单 for 数据框2
+        private void ShowDataSourceMenu2(object sender, RoutedEventArgs e)
+        {
+            var menu = new ContextMenu();
+
+            var item1 = new MenuItem { Header = "1网滚球数据" };
+            item1.Click += (s, args) =>
+            {
+                selectedDataSource2 = "1网滚球数据";
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "1网滚球数据";
+                }
+                MessageBox.Show("已选择 1网滚球数据 为数据源。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            };
+            menu.Items.Add(item1);
+
+            var item2 = new MenuItem { Header = "2网滚球数据" };
+            item2.Click += (s, args) =>
+            {
+                selectedDataSource2 = "2网滚球数据";
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "2网滚球数据";
+                }
+                MessageBox.Show("已选择 2网滚球数据 为数据源。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            };
+            menu.Items.Add(item2);
+
+            menu.IsOpen = true;
+        }
+
+
 
         #region 添加绑定
 
@@ -215,7 +416,7 @@ namespace AutoBet
             }
             else
             {
-                MessageBox.Show("请从 1网 和 2网 中各选择一场比赛进行绑定。");
+                MessageBox.Show("请从 A网 和 B网 中各选择一场比赛进行绑定。");
             }
         }
 
@@ -288,7 +489,7 @@ namespace AutoBet
             {
                 match1RefreshTimer.Interval = TimeSpan.FromMilliseconds(interval);
                 match1RefreshTimer.Start();
-                MessageBox.Show($"1网数据将每 {interval / 1000} 秒刷新一次。");
+                MessageBox.Show($"A网数据将每 {interval / 1000} 秒刷新一次。");
             }
         }
 
@@ -296,7 +497,7 @@ namespace AutoBet
         private void Match1StopAutoRefresh_Click(object sender, RoutedEventArgs e)
         {
             match1RefreshTimer.Stop();
-            MessageBox.Show("已停止 1网 的自动刷新。");
+            MessageBox.Show("已停止 A网 的自动刷新。");
         }
 
         // Match2 刷新间隔选择事件
@@ -306,7 +507,7 @@ namespace AutoBet
             {
                 match2RefreshTimer.Interval = TimeSpan.FromMilliseconds(interval);
                 match2RefreshTimer.Start();
-                MessageBox.Show($"2网数据将每 {interval / 1000} 秒刷新一次。");
+                MessageBox.Show($"B网数据将每 {interval / 1000} 秒刷新一次。");
             }
         }
 
@@ -314,19 +515,19 @@ namespace AutoBet
         private void Match2StopAutoRefresh_Click(object sender, RoutedEventArgs e)
         {
             match2RefreshTimer.Stop();
-            MessageBox.Show("已停止 2网 的自动刷新。");
+            MessageBox.Show("已停止 B网 的自动刷新。");
         }
 
         // Match1 定时器 Tick 事件
         private async void Match1RefreshTimer_Tick(object sender, EventArgs e)
         {
-            await LoadMatch1Data();
+            await LoadMatch1Data(1);
         }
 
         // Match2 定时器 Tick 事件
         private async void Match2RefreshTimer_Tick(object sender, EventArgs e)
         {
-            await LoadMatch2Data();
+            await LoadMatch2Data(1);
         }
 
         #endregion
