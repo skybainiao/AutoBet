@@ -14,6 +14,10 @@ namespace AutoBet.DTO
         public string HomeTeam2Name { get; set; }
         public string AwayTeam1Name { get; set; }
         public string AwayTeam2Name { get; set; }
+
+        // 新增的数据来源字段
+        public int DataSource1 { get; set; }
+        public int DataSource2 { get; set; }
     }
 
 

@@ -19,6 +19,9 @@ namespace AutoBet.Model
         public string HomeScore { get; set; }
         public string AwayScore { get; set; }
 
+        // 新增的数据来源属性
+        public int DataSource { get; set; }
+
         // 新增属性：IsBound
         public bool IsBound
         {
