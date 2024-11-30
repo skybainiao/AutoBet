@@ -666,98 +666,107 @@ namespace AutoBet
             {
                 using var client = new HttpClient();
                 client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
-            
+
                 var response = await client.GetAsync("bindings");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    var bindings = JsonSerializer.Deserialize<List<BindingRecordDTO>>(json, new JsonSerializerOptions
+                    var bindings = JsonSerializer.Deserialize<List<DTO.BindingRecordDTO>>(json, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
 
-                    BindingRecordsListView.ItemsSource = bindings;
+                    // 按 DataSource1 和 DataSource2 分组
+                    var groupedBindings = bindings
+                        .GroupBy(b => new { b.DataSource1, b.DataSource2 })
+                        .Select(g => new Model.BindingRecordGroup
+                        {
+                            DataSource1 = g.Key.DataSource1,
+                            DataSource2 = g.Key.DataSource2,
+                            Leagues = g.GroupBy(b => new { b.League1Name, b.League2Name })
+                                       .Select(lg => new Model.LeagueBinding
+                                       {
+                                           League1Name = lg.Key.League1Name,
+                                           League2Name = lg.Key.League2Name,
+                                           Bindings = lg.ToList()
+                                       })
+                                       .ToList()
+                        })
+                        .ToList();
+
+                    BindingRecordsTreeView.ItemsSource = groupedBindings;
                 }
                 else
                 {
-                    MessageBox.Show($"获取绑定记录失败: {response.ReasonPhrase}");
+                    MessageBox.Show($"获取绑定记录失败: {response.ReasonPhrase}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"获取绑定记录时发生错误: {ex.Message}");
+                MessageBox.Show($"获取绑定记录时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
+
+
 
 
 
         private async void DeleteBindingRecord_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button deleteButton && deleteButton.Tag is long bindingId)
+            if (sender is MenuItem deleteMenuItem && deleteMenuItem.Tag != null)
             {
-                var confirmResult = MessageBox.Show(this, "您确定要删除选中的绑定记录吗？", "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (confirmResult != MessageBoxResult.Yes)
-                    return;
-
-                try
+                if (long.TryParse(deleteMenuItem.Tag.ToString(), out long bindingId))
                 {
-                     
+                    var confirmResult = MessageBox.Show(
+                        "确定要删除这条绑定记录吗？",
+                        "确认删除",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning
+                    );
 
-                    using var client = new HttpClient();
-                    client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
-
-                    var response = await client.DeleteAsync($"bindings/{bindingId}");
-
-                    if (response.IsSuccessStatusCode)
+                    if (confirmResult == MessageBoxResult.Yes)
                     {
-                        MessageBox.Show(this, "已成功删除绑定记录。", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                        // 刷新绑定记录页面
-                        await LoadBindingRecords();
-
-                        // 更新本地绑定列表，取消绑定状态
-                        // 获取已删除的 BindingRecordDTO
-                        var deletedBinding = ((List<BindingRecordDTO>)BindingRecordsListView.ItemsSource)
-                                              .FirstOrDefault(b => b.Id == bindingId);
-
-                        if (deletedBinding != null)
+                        try
                         {
-                            var bindingToRemove = _pairedMatches.FirstOrDefault(pm =>
-                                pm.Match1.League == deletedBinding.League1Name &&
-                                pm.Match2.League == deletedBinding.League2Name &&
-                                pm.Match1.HomeTeam == deletedBinding.HomeTeam1Name &&
-                                pm.Match2.HomeTeam == deletedBinding.HomeTeam2Name &&
-                                pm.Match1.AwayTeam == deletedBinding.AwayTeam1Name &&
-                                pm.Match2.AwayTeam == deletedBinding.AwayTeam2Name
-                            );
+                            using var client = new HttpClient();
+                            client.BaseAddress = new Uri("http://localhost:8080/api/");
 
-                            if (bindingToRemove != null)
+                            var response = await client.DeleteAsync($"bindings/{bindingId}");
+
+                            if (response.IsSuccessStatusCode)
                             {
-                                bindingToRemove.Match1.IsBound = false;
-                                bindingToRemove.Match2.IsBound = false;
-                                _pairedMatches.Remove(bindingToRemove);
-                                BoundMatchesListView.ItemsSource = null;
-                                BoundMatchesListView.ItemsSource = _pairedMatches;
+                                MessageBox.Show("绑定记录已成功删除。", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                                // 重新加载绑定记录
+                                await LoadBindingRecords();
+                            }
+                            else
+                            {
+                                MessageBox.Show($"删除绑定记录失败: {response.ReasonPhrase}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                             }
                         }
-                    }
-                    else
-                    {
-                        MessageBox.Show(this, $"删除绑定记录失败: {response.ReasonPhrase}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"删除绑定记录时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show(this, $"删除绑定记录时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("无效的绑定记录ID。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                 
             }
             else
             {
-                MessageBox.Show(this, "请先选择要删除的绑定记录。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("未能识别要删除的绑定记录。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
+
+
 
 
 
