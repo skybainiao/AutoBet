@@ -12,16 +12,23 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Threading;
 using System.Text;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.ComponentModel;
 
 
 namespace AutoBet
 {
     public partial class MainWindow : Window
     {
-        private const string Server1Url = "http://127.0.0.1:5000/today_fixtures";
-        private const string Server2Url = "http://127.0.0.1:5001/matches";
+        private const string Server1Url = "http://localhost:5000/today_fixtures";
+        private const string Server2Url = "http://localhost:5001/matches";
         private string selectedDataSource1 = null;
         private string selectedDataSource2 = null;
+        // 在 MainWindow 类内添加以下字段
+        private List<DTO.BindingRecordDTO> _bindings = new List<DTO.BindingRecordDTO>();
+        // 定义默认的相似度阈值
+        private double _precisionThreshold = 0.85;
 
 
         private readonly List<PairedMatchInfo> _pairedMatches = new();
@@ -45,7 +52,6 @@ namespace AutoBet
         }
 
 
-        #region 刷新数据按钮点击事件
         // 刷新 Match1 数据（手动刷新）
         private async void RefreshMatch1Data(object sender, RoutedEventArgs e)
         {
@@ -57,7 +63,8 @@ namespace AutoBet
                 // 显示加载覆盖层
                 LoadingOverlay.Visibility = Visibility.Visible;
 
-                await LoadMatch1Data(0);
+                await LoadBindingRecords(); // 先加载绑定记录
+                await LoadMatch1Data(0); // 然后加载 Match1 数据
             }
             catch (Exception ex)
             {
@@ -71,9 +78,6 @@ namespace AutoBet
             }
         }
 
-
-
-
         // 刷新 Match2 数据（手动刷新）
         private async void RefreshMatch2Data(object sender, RoutedEventArgs e)
         {
@@ -85,7 +89,8 @@ namespace AutoBet
                 // 显示加载覆盖层
                 LoadingOverlay.Visibility = Visibility.Visible;
 
-                await LoadMatch2Data(0);
+                await LoadBindingRecords(); // 先加载绑定记录
+                await LoadMatch2Data(0); // 然后加载 Match2 数据
             }
             catch (Exception ex)
             {
@@ -101,11 +106,7 @@ namespace AutoBet
 
 
 
-
-        #endregion
-
         #region 数据加载方法
-
 
         // 加载 Match1 数据
         private async Task LoadMatch1Data(int t)
@@ -123,19 +124,13 @@ namespace AutoBet
                 var match1Data = await FetchMatch1Data(serverUrl);
                 if (match1Data != null)
                 {
-                    // 设置 IsBound based on _pairedMatches
-                    foreach (var match in match1Data)
-                    {
-                        if (_pairedMatches.Any(pm => MatchesAreEqual(pm.Match1, match)))
-                        {
-                            match.IsBound = true;
-                        }
-                    }
+                    // 过滤已绑定的比赛
+                    var filteredMatch1Data = match1Data.Where(match => !IsMatchBound(match, selectedDataSource1)).ToList();
 
                     // 更新 ListView 数据源
                     var collectionView = new CollectionViewSource
                     {
-                        Source = match1Data
+                        Source = filteredMatch1Data
                     };
                     collectionView.GroupDescriptions.Add(new PropertyGroupDescription("League"));
                     Match1ListView.ItemsSource = collectionView.View;
@@ -143,9 +138,9 @@ namespace AutoBet
                     if (t == 0)
                     {
                         // 弹窗显示加载数据数量
-                        if (match1Data.Count > 0)
+                        if (filteredMatch1Data.Count > 0)
                         {
-                            MessageBox.Show($"A网今日比赛加载完成，共加载 {match1Data.Count} 场比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show($"A网今日比赛加载完成，共加载 {filteredMatch1Data.Count} 场比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         else
                         {
@@ -185,19 +180,13 @@ namespace AutoBet
                 var match2Data = await FetchMatch2Data(serverUrl);
                 if (match2Data != null)
                 {
-                    // 设置 IsBound based on _pairedMatches
-                    foreach (var match in match2Data)
-                    {
-                        if (_pairedMatches.Any(pm => MatchesAreEqual(pm.Match2, match)))
-                        {
-                            match.IsBound = true;
-                        }
-                    }
+                    // 过滤已绑定的比赛
+                    var filteredMatch2Data = match2Data.Where(match => !IsMatchBound(match, selectedDataSource2)).ToList();
 
                     // 更新 ListView 数据源
                     var collectionView = new CollectionViewSource
                     {
-                        Source = match2Data
+                        Source = filteredMatch2Data
                     };
                     collectionView.GroupDescriptions.Add(new PropertyGroupDescription("League"));
                     Match2ListView.ItemsSource = collectionView.View;
@@ -205,9 +194,9 @@ namespace AutoBet
                     if (t == 0)
                     {
                         // 弹窗显示加载数据数量
-                        if (match2Data.Count > 0)
+                        if (filteredMatch2Data.Count > 0)
                         {
-                            MessageBox.Show($"B网今日比赛加载完成，共加载 {match2Data.Count} 场比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show($"B网今日比赛加载完成，共加载 {filteredMatch2Data.Count} 场比赛。", "加载完成", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         else
                         {
@@ -231,6 +220,28 @@ namespace AutoBet
 
 
 
+        private bool IsMatchBound(Model.MatchInfo match, string selectedDataSource)
+        {
+            if (selectedDataSource == "1网今日数据")
+            {
+                return _bindings.Any(binding =>
+                    string.Equals(binding.League1Name, match.League, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(binding.HomeTeam1Name, match.HomeTeam, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(binding.AwayTeam1Name, match.AwayTeam, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+            else if (selectedDataSource == "2网今日数据")
+            {
+                return _bindings.Any(binding =>
+                    string.Equals(binding.League2Name, match.League, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(binding.HomeTeam2Name, match.HomeTeam, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(binding.AwayTeam2Name, match.AwayTeam, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+
+            return false;
+        }
+
 
         // 获取服务器1或2的 Match1 数据
         private async Task<List<MatchInfo>> FetchMatch1Data(string serverUrl)
@@ -253,7 +264,7 @@ namespace AutoBet
                         League = match.GetProperty("league").GetString(),
                         HomeTeam = match.GetProperty("home_team").GetString(),
                         AwayTeam = match.GetProperty("away_team").GetString(),
-                        MatchTime = string.Empty, // 根据实际情况设置
+                        MatchTime = match.GetProperty("time").GetString(), // 读取 time 字段
                         IsBound = false,
                         DataSource = dataSource // 设置数据来源
                     });
@@ -267,11 +278,6 @@ namespace AutoBet
                 return null;
             }
         }
-
-
-
-
-
 
         // 获取服务器1或2的 Match2 数据
         private async Task<List<MatchInfo>> FetchMatch2Data(string serverUrl)
@@ -294,7 +300,7 @@ namespace AutoBet
                         League = match.GetProperty("league").GetString(),
                         HomeTeam = match.GetProperty("home_team").GetString(),
                         AwayTeam = match.GetProperty("away_team").GetString(),
-                        MatchTime = string.Empty, // 根据实际情况设置
+                        MatchTime = match.GetProperty("time").GetString(), // 读取 time 字段
                         IsBound = false,
                         DataSource = dataSource // 设置数据来源
                     });
@@ -308,6 +314,7 @@ namespace AutoBet
                 return null;
             }
         }
+
 
 
 
@@ -665,9 +672,9 @@ namespace AutoBet
             try
             {
                 using var client = new HttpClient();
-                client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
+                client.BaseAddress = new Uri("http://localhost:8080/api/"); // API 基础地址
 
-                var response = await client.GetAsync("bindings");
+                var response = await client.GetAsync("bindings"); // 假设 API 路径为 /bindings
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -677,25 +684,30 @@ namespace AutoBet
                         PropertyNameCaseInsensitive = true
                     });
 
-                    // 按 DataSource1 和 DataSource2 分组
-                    var groupedBindings = bindings
-                        .GroupBy(b => new { b.DataSource1, b.DataSource2 })
-                        .Select(g => new Model.BindingRecordGroup
-                        {
-                            DataSource1 = g.Key.DataSource1,
-                            DataSource2 = g.Key.DataSource2,
-                            Leagues = g.GroupBy(b => new { b.League1Name, b.League2Name })
-                                       .Select(lg => new Model.LeagueBinding
-                                       {
-                                           League1Name = lg.Key.League1Name,
-                                           League2Name = lg.Key.League2Name,
-                                           Bindings = lg.ToList()
-                                       })
-                                       .ToList()
-                        })
-                        .ToList();
+                    if (bindings != null)
+                    {
+                        _bindings = bindings; // 填充私有字段
 
-                    BindingRecordsTreeView.ItemsSource = groupedBindings;
+                        // 按 DataSource1 和 DataSource2 分组
+                        var groupedBindings = bindings
+                            .GroupBy(b => new { b.DataSource1, b.DataSource2 })
+                            .Select(g => new Model.BindingRecordGroup
+                            {
+                                DataSource1 = g.Key.DataSource1,
+                                DataSource2 = g.Key.DataSource2,
+                                Leagues = g.GroupBy(b => new { b.League1Name, b.League2Name })
+                                           .Select(lg => new Model.LeagueBinding
+                                           {
+                                               League1Name = lg.Key.League1Name,
+                                               League2Name = lg.Key.League2Name,
+                                               Bindings = lg.ToList()
+                                           })
+                                           .ToList()
+                            })
+                            .ToList();
+
+                        BindingRecordsTreeView.ItemsSource = groupedBindings;
+                    }
                 }
                 else
                 {
@@ -707,6 +719,7 @@ namespace AutoBet
                 MessageBox.Show($"获取绑定记录时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
 
 
@@ -847,6 +860,9 @@ namespace AutoBet
 
             try
             {
+                // 获取当前相似度阈值
+                double similarityThreshold = PrecisionSlider.Value;
+
                 // 获取所有未绑定的 Match1 和 Match2
                 var availableMatch1 = LoadAllMatch1Data();
                 var availableMatch2 = LoadAllMatch2Data();
@@ -860,7 +876,7 @@ namespace AutoBet
                         if (!_pairedMatches.Any(pm => MatchesAreEqual(pm.Match1, m1) && MatchesAreEqual(pm.Match2, m2)))
                         {
                             // 使用改进的相似性匹配逻辑
-                            if (AreMatchesSimilar(m1, m2))
+                            if (AreMatchesSimilar(m1, m2, similarityThreshold))
                             {
                                 autoBoundMatches.Add(new PairedMatchInfo { Match1 = m1, Match2 = m2 });
                             }
@@ -898,6 +914,7 @@ namespace AutoBet
         }
 
 
+
         // 加载所有 Match1 数据（包括已绑定和未绑定）
         private List<MatchInfo> LoadAllMatch1Data()
         {
@@ -921,21 +938,19 @@ namespace AutoBet
         }
 
         // 判断两个比赛是否相似
-        private bool AreMatchesSimilar(MatchInfo m1, MatchInfo m2)
+        private bool AreMatchesSimilar(MatchInfo m1, MatchInfo m2, double similarityThreshold)
         {
-            // 定义相似度阈值（0.85 表示 85% 相似度）
-            const double similarityThreshold = 0.85;
-
             // 计算联赛、主队和客队的相似度评分
             double leagueSimilarity = CalculateStringSimilarity(m1.League, m2.League);
             double homeTeamSimilarity = CalculateStringSimilarity(m1.HomeTeam, m2.HomeTeam);
             double awayTeamSimilarity = CalculateStringSimilarity(m1.AwayTeam, m2.AwayTeam);
 
-            // 如果所有评分都超过阈值，则认为两场比赛相似
+            // 如果所有评分都超过当前阈值，则认为两场比赛相似
             return leagueSimilarity >= similarityThreshold &&
                    homeTeamSimilarity >= similarityThreshold &&
                    awayTeamSimilarity >= similarityThreshold;
         }
+
 
         // 计算两个字符串的相似性（使用 Jaccard 相似性算法）
         private double CalculateStringSimilarity(string str1, string str2)
@@ -955,6 +970,19 @@ namespace AutoBet
         }
 
         #endregion
+
+
+        // 滑块值变化事件处理程序
+        private void PrecisionSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (PrecisionValueText != null)
+            {
+                PrecisionValueText.Text = e.NewValue.ToString("F2");
+            }
+        }
+
+
+
 
 
         private async void AutoBind_Click1(object sender, RoutedEventArgs e)
@@ -1048,6 +1076,132 @@ namespace AutoBet
         }
 
         #endregion
+
+
+
+
+
+
+        // 复制 Match1ListView 的菜单项点击事件处理程序
+        private void CopyMatch1MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedMatch = Match1ListView.SelectedItem as Model.MatchInfo;
+            if (selectedMatch != null)
+            {
+                string copyText = $"联赛: {selectedMatch.League}\t主队: {selectedMatch.HomeTeam}\t客队: {selectedMatch.AwayTeam}\t比赛时间: {selectedMatch.MatchTime}";
+                Clipboard.SetDataObject(copyText);
+                MessageBox.Show("A网比赛信息已复制到剪贴板。", "复制成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("请先选择一场比赛。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        // 复制 Match2ListView 的菜单项点击事件处理程序
+        private void CopyMatch2MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedMatch = Match2ListView.SelectedItem as Model.MatchInfo;
+            if (selectedMatch != null)
+            {
+                string copyText = $"联赛: {selectedMatch.League}\t主队: {selectedMatch.HomeTeam}\t客队: {selectedMatch.AwayTeam}\t比赛时间: {selectedMatch.MatchTime}";
+                Clipboard.SetDataObject(copyText);
+                MessageBox.Show("B网比赛信息已复制到剪贴板。", "复制成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("请先选择一场比赛。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+
+
+        /// <summary>
+        /// 根据搜索关键词过滤 Match1ListView 的显示内容。
+        /// </summary>
+        private void FilterMatch1List(string searchText)
+        {
+            ICollectionView view = CollectionViewSource.GetDefaultView(Match1ListView.ItemsSource);
+            if (view != null)
+            {
+                view.Filter = item =>
+                {
+                    var match = item as Model.MatchInfo;
+                    if (match == null) return false;
+
+                    if (string.IsNullOrWhiteSpace(searchText))
+                        return true;
+
+                    searchText = searchText.ToLower();
+
+                    return (match.MatchTime != null && match.MatchTime.ToLower().Contains(searchText)) ||
+                           (match.League != null && match.League.ToLower().Contains(searchText)) ||
+                           (match.HomeTeam != null && match.HomeTeam.ToLower().Contains(searchText)) ||
+                           (match.AwayTeam != null && match.AwayTeam.ToLower().Contains(searchText));
+                };
+            }
+        }
+
+        /// <summary>
+        /// 根据搜索关键词过滤 Match2ListView 的显示内容。
+        /// </summary>
+        private void FilterMatch2List(string searchText)
+        {
+            ICollectionView view = CollectionViewSource.GetDefaultView(Match2ListView.ItemsSource);
+            if (view != null)
+            {
+                view.Filter = item =>
+                {
+                    var match = item as Model.MatchInfo;
+                    if (match == null) return false;
+
+                    if (string.IsNullOrWhiteSpace(searchText))
+                        return true;
+
+                    searchText = searchText.ToLower();
+
+                    return (match.MatchTime != null && match.MatchTime.ToLower().Contains(searchText)) ||
+                           (match.League != null && match.League.ToLower().Contains(searchText)) ||
+                           (match.HomeTeam != null && match.HomeTeam.ToLower().Contains(searchText)) ||
+                           (match.AwayTeam != null && match.AwayTeam.ToLower().Contains(searchText));
+                };
+            }
+        }
+
+
+
+
+        // 搜索框1的文本变化事件处理程序
+        private void Match1SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var searchBox = sender as TextBox;
+            if (searchBox != null)
+            {
+                string searchText = searchBox.Text;
+                FilterMatch1List(searchText);
+            }
+        }
+
+        // 搜索框2的文本变化事件处理程序
+        private void Match2SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var searchBox = sender as TextBox;
+            if (searchBox != null)
+            {
+                string searchText = searchBox.Text;
+                FilterMatch2List(searchText);
+            }
+        }
+
+
+
+
+
+
+
+
+
+
     }
 
 

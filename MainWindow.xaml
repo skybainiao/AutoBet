@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:model="clr-namespace:AutoBet.Model"
         xmlns:dto="clr-namespace:AutoBet.DTO"
-        Title="AutoBet" Height="900" Width="1600" MinHeight="900" MinWidth="1000">
+        Title="AutoBet 1.1" Height="960" Width="1600" MinHeight="900" MinWidth="1000">
     <Grid>
         <TabControl>
             <!-- 足球 Tab -->
@@ -15,98 +15,244 @@
                             <Grid Margin="10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="3*"/>
-                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2.5*"/>
                                 </Grid.ColumnDefinitions>
-
                                 <!-- 左侧：Match1 和 Match2 数据 -->
-                                <StackPanel Grid.Column="0" Margin="10">
+                                <StackPanel Grid.Column="0" Margin="0">
                                     <!-- 1网滚球 -->
-                                    <GroupBox Header="A网数据" Height="380" Margin="0,0,0,0">
+                                    <GroupBox Header="A网数据" Height="420" Margin="0,0,0,0">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="*"/>
                                             </Grid.RowDefinitions>
-                                            <!-- 刷新按钮和选择刷新时间按钮 -->
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5">
-                                                <Button Content="选择数据源" Click="ShowDataSourceMenu1" Width="120" Height="25" Margin="0,0,5,0"/>
+                                            <!-- 刷新按钮和搜索控件 -->
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5" Grid.Row="0">
+                                                <!-- 搜索控件 -->
+                                                <Label Content="搜索：" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBox 
+                                                    Name="Match1SearchBox" 
+                                                    Width="200" 
+                                                    Height="25" 
+                                                    Margin="0,0,10,0" 
+                                                    TextChanged="Match1SearchBox_TextChanged" 
+                                                    ToolTip="输入联赛、主队、客队或时间"/>
 
+                                                <!-- 原有的按钮 -->
+                                                <Button Content="选择数据源" Click="ShowDataSourceMenu1" Width="120" Height="25" Margin="0,0,5,0"/>
                                                 <Button Content="刷新" Click="RefreshMatch1Data" Width="75" Height="25" Margin="0,0,5,0"/>
                                                 <!-- 设置刷新时间按钮 -->
                                                 <Button Content="设置刷新时间 ▼" Width="120" Height="25" Click="ShowMatch1RefreshMenu"/>
                                             </StackPanel>
-                                            <!-- 添加滚动条和列头 -->
-                                            <ListView Name="Match1ListView" Grid.Row="1" SelectionMode="Single"   MaxHeight="380">
+
+
+                                            <ListView Name="Match1ListView" Grid.Row="1" SelectionMode="Single" MaxHeight="380">
                                                 <ListView.View>
                                                     <GridView>
-                                                        <GridViewColumn Header="联赛" DisplayMemberBinding="{Binding League}" Width="300"/>
-                                                        <GridViewColumn Header="主队" DisplayMemberBinding="{Binding HomeTeam}" Width="300"/>
-                                                        <GridViewColumn Header="客队" DisplayMemberBinding="{Binding AwayTeam}" Width="300"/>
-                                                     </GridView>
+
+                                                        <!-- 比赛时间列 -->
+                                                        <GridViewColumn Header="比赛时间" Width="80">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding MatchTime}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent" 
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        <!-- 联赛列 -->
+                                                        <GridViewColumn Header="联赛" Width="255">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding League}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent" 
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        <!-- 主队列 -->
+                                                        <GridViewColumn Header="主队" Width="240">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding HomeTeam}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent" 
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        <!-- 客队列 -->
+                                                        <GridViewColumn Header="客队" Width="240">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding AwayTeam}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent"                                                                             
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        
+                                                    </GridView>
                                                 </ListView.View>
+
+                                               
+                                                <ListView.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="复制此行所有信息" Click="CopyMatch1MenuItem_Click"/>
+                                                    </ContextMenu>
+                                                </ListView.ContextMenu> 
+
+                                                <!-- 保持 ItemContainerStyle 以设置背景颜色 -->
                                                 <ListView.ItemContainerStyle>
                                                     <Style TargetType="ListViewItem">
+                                                        <!-- 设置默认背景颜色 -->
                                                         <Setter Property="Background" Value="White"/>
+                                                         
+                                                        <!-- 设置触发器 -->
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsBound}" Value="True">
                                                                 <Setter Property="Background" Value="LightCoral"/>
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsSimilar}" Value="True">
-                                                                <Setter Property="Background" Value="LightGreen"/>
-                                                            </DataTrigger>
+                                                            <!-- 如果需要其他触发器，可以在这里添加 -->
                                                         </Style.Triggers>
                                                     </Style>
                                                 </ListView.ItemContainerStyle>
                                             </ListView>
+
                                         </Grid>
                                     </GroupBox>
 
                                     <!-- 2网滚球 -->
-                                    <GroupBox Header="B网数据" Height="380">
+                                    <GroupBox Header="B网数据" Height="420">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="*"/>
                                             </Grid.RowDefinitions>
-                                            <!-- 刷新按钮和选择刷新时间按钮 -->
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5">
-                                                <Button Content="选择数据源" Click="ShowDataSourceMenu2" Width="120" Height="25" Margin="0,0,5,0"/>
+                                            <!-- 刷新按钮和搜索控件 -->
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5" Grid.Row="0">
+                                                <!-- 搜索控件 -->
+                                                <Label Content="搜索：" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBox 
+                                                    Name="Match2SearchBox" 
+                                                    Width="200" 
+                                                    Height="25" 
+                                                    Margin="0,0,10,0" 
+                                                    TextChanged="Match2SearchBox_TextChanged" 
+                                                    ToolTip="输入联赛、主队、客队或时间"/>
 
+                                                <!-- 原有的按钮 -->
+                                                <Button Content="选择数据源" Click="ShowDataSourceMenu2" Width="120" Height="25" Margin="0,0,5,0"/>
                                                 <Button Content="刷新" Click="RefreshMatch2Data" Width="75" Height="25" Margin="0,0,5,0"/>
                                                 <!-- 设置刷新时间按钮 -->
                                                 <Button Content="设置刷新时间 ▼" Width="120" Height="25" Click="ShowMatch2RefreshMenu"/>
                                             </StackPanel>
-                                            <!-- 添加滚动条和列头 -->
-                                            <ListView Name="Match2ListView" Grid.Row="1" SelectionMode="Single"   MaxHeight="380">
+
+                                            <ListView Name="Match2ListView" Grid.Row="1" SelectionMode="Single" MaxHeight="380">
                                                 <ListView.View>
                                                     <GridView>
-                                                        <GridViewColumn Header="联赛" DisplayMemberBinding="{Binding League}" Width="300"/>
-                                                        <GridViewColumn Header="主队" DisplayMemberBinding="{Binding HomeTeam}" Width="300"/>
-                                                        <GridViewColumn Header="客队" DisplayMemberBinding="{Binding AwayTeam}" Width="300"/>
-                                                     </GridView>
+
+                                                        <!-- 比赛时间列 -->
+                                                        <GridViewColumn Header="比赛时间" Width="80">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding MatchTime}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent"                                   
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        <!-- 联赛列 -->
+                                                        <GridViewColumn Header="联赛" Width="255">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding League}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent"                                 
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        <!-- 主队列 -->
+                                                        <GridViewColumn Header="主队" Width="240">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding HomeTeam}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent"                                  
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        <!-- 客队列 -->
+                                                        <GridViewColumn Header="客队" Width="240">
+                                                            <GridViewColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBox Text="{Binding AwayTeam}" 
+                                                                             IsReadOnly="True" 
+                                                                             BorderThickness="0" 
+                                                                             Background="Transparent"                                   
+                                                                             Cursor="IBeam"/>
+                                                                </DataTemplate>
+                                                            </GridViewColumn.CellTemplate>
+                                                        </GridViewColumn>
+
+                                                        
+                                                    </GridView>
                                                 </ListView.View>
+
+                                                
+                                                 
+                                                <ListView.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="复制此行所有信息" Click="CopyMatch2MenuItem_Click"/>
+                                                    </ContextMenu>
+                                                </ListView.ContextMenu>  
+
+                                                <!-- 保持 ItemContainerStyle 以设置背景颜色 -->
                                                 <ListView.ItemContainerStyle>
                                                     <Style TargetType="ListViewItem">
+                                                        <!-- 设置默认背景颜色 -->
                                                         <Setter Property="Background" Value="White"/>
+                                                        
+                                                        <!-- 设置触发器 -->
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsBound}" Value="True">
                                                                 <Setter Property="Background" Value="LightCoral"/>
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsSimilar}" Value="True">
-                                                                <Setter Property="Background" Value="LightGreen"/>
-                                                            </DataTrigger>
+                                                            <!-- 如果需要其他触发器，可以在这里添加 -->
                                                         </Style.Triggers>
                                                     </Style>
                                                 </ListView.ItemContainerStyle>
                                             </ListView>
+                                             
                                         </Grid>
                                     </GroupBox>
                                 </StackPanel>
 
+
                                 <!-- 右侧：已绑定比赛及对比信息 -->
-                                <StackPanel Grid.Column="1" Margin="10" VerticalAlignment="Top">
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Top">
                                     <!-- 已绑定比赛 -->
-                                    <GroupBox Header="已绑定比赛" Height="760" Width="600" Margin="0,0,0,20">
+                                    <GroupBox Header="已绑定比赛" Height="840" Width="700" Margin="0,0,0,0">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -115,40 +261,50 @@
                                             <!-- 添加绑定按钮和提交、删除按钮放在右上角 -->
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,5">
                                                 <!-- 将 "添加绑定" 按钮移动到这里，放在 "自动绑定" 按钮的左边 -->
-                                                <Button Content="添加绑定" Click="AddBinding" Width="100" Height="25" Margin="0,0,5,0"/>
+                                                <Button Content="添加绑定" Click="AddBinding" Width="75" Height="25" Margin="0,0,5,0"/>
                                                 <Button Content="模糊绑定" Width="75" Height="25" Click="AutoBind_Click1" Margin="0,0,5,0"/>
-                                                <Button Content="精确绑定" Width="75" Height="25" Click="AutoBind_Click" Margin="0,0,5,0"/>
+
+                                                <!-- 精确绑定按钮和相似度阈值滑块 -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,5,0">
+                                                    <Button Name="PrecisionBindButton" Content="自定义绑定" Width="75" Height="25" Click="AutoBind_Click" Margin="0,0,5,0"/>
+                                                    <Slider Name="PrecisionSlider" Width="100" Minimum="0" Maximum="1" Value="0.85" TickFrequency="0.05" 
+                                                            IsSnapToTickEnabled="False" 
+                                                            ToolTip="调整相似度阈值" 
+                                                            ValueChanged="PrecisionSlider_ValueChanged"/>
+                                                    <TextBlock Name="PrecisionValueText" Text="0.85" Width="40" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                                </StackPanel>
+
                                                 <Button Content="提交" Width="75" Height="25" Click="SubmitBoundMatches_Click" Margin="0,0,5,0"/>
                                                 <Button Content="移除" Width="75" Height="25" Click="DeleteBoundMatch_Click" Margin="0,0,5,0"/>
                                                 <Button Content="清空" Width="75" Height="25" Click="DeleteAllBoundMatches_Click"/>
                                             </StackPanel>
                                             <!-- 已绑定比赛列表 -->
                                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                                <ListView Name="BoundMatchesListView" SelectionMode="Single" Height="700">
+                                                <ListView Name="BoundMatchesListView" SelectionMode="Single" Height="780">
                                                     <ListView.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border BorderBrush="Gray" BorderThickness="1" Width="550" Margin="5" Padding="5">
+                                                            <Border BorderBrush="Gray" BorderThickness="1" Width="650" Margin="5" Padding="5">
                                                                 <StackPanel>
                                                                     <!-- 联赛对比 -->
                                                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                                                        <TextBlock Text="1网联赛：" FontWeight="Bold" Width="90"/>
-                                                                        <TextBlock Text="{Binding Match1.League}" Width="150"/>
-                                                                        <TextBlock Text="2网联赛：" FontWeight="Bold" Width="90" Margin="20,0,0,0"/>
-                                                                        <TextBlock Text="{Binding Match2.League}" Width="150"/>
+                                                                        <TextBlock Text="1网联赛：" FontWeight="Bold" Width="60"/>
+                                                                        <TextBlock Text="{Binding Match1.League}" Width="250"/>
+                                                                        <TextBlock Text="2网联赛：" FontWeight="Bold" Width="60" Margin="0,0,0,0"/>
+                                                                        <TextBlock Text="{Binding Match2.League}" Width="250"/>
                                                                     </StackPanel>
                                                                     <!-- 主队对比 -->
                                                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                                                        <TextBlock Text="1网主队：" FontWeight="Bold" Width="90"/>
-                                                                        <TextBlock Text="{Binding Match1.HomeTeam}" Width="150"/>
-                                                                        <TextBlock Text="2网主队：" FontWeight="Bold" Width="90" Margin="20,0,0,0"/>
-                                                                        <TextBlock Text="{Binding Match2.HomeTeam}" Width="150"/>
+                                                                        <TextBlock Text="1网主队：" FontWeight="Bold" Width="60"/>
+                                                                        <TextBlock Text="{Binding Match1.HomeTeam}" Width="250"/>
+                                                                        <TextBlock Text="2网主队：" FontWeight="Bold" Width="60" Margin="0,0,0,0"/>
+                                                                        <TextBlock Text="{Binding Match2.HomeTeam}" Width="250"/>
                                                                     </StackPanel>
                                                                     <!-- 客队对比 -->
                                                                     <StackPanel Orientation="Horizontal">
-                                                                        <TextBlock Text="1网客队：" FontWeight="Bold" Width="90"/>
-                                                                        <TextBlock Text="{Binding Match1.AwayTeam}" Width="150"/>
-                                                                        <TextBlock Text="2网客队：" FontWeight="Bold" Width="90" Margin="20,0,0,0"/>
-                                                                        <TextBlock Text="{Binding Match2.AwayTeam}" Width="150"/>
+                                                                        <TextBlock Text="1网客队：" FontWeight="Bold" Width="60"/>
+                                                                        <TextBlock Text="{Binding Match1.AwayTeam}" Width="250"/>
+                                                                        <TextBlock Text="2网客队：" FontWeight="Bold" Width="60" Margin="0,0,0,0"/>
+                                                                        <TextBlock Text="{Binding Match2.AwayTeam}" Width="250"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
@@ -159,6 +315,7 @@
                                         </Grid>
                                     </GroupBox>
                                 </StackPanel>
+
                             </Grid>
                         </TabItem>
 

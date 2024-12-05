@@ -12,6 +12,7 @@ namespace AutoBet.Model
     {
         private bool _isBound;
 
+
         public string League { get; set; }
         public string HomeTeam { get; set; }
         public string AwayTeam { get; set; }
