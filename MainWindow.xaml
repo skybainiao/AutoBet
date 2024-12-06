@@ -367,17 +367,149 @@
                         </TabItem>
 
 
-                        <!-- 投注子标签 -->
                         <TabItem Header="投注">
                             <Grid Margin="10">
-                                <TextBlock Text="投注页面内容尚未实现。"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="16"
-                                           Foreground="Gray"
-                                           TextWrapping="Wrap"/>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <!-- 标题 -->
+                                    <RowDefinition Height="*"/>
+                                    <!-- 内容区域 -->
+                                    <RowDefinition Height="Auto"/>
+                                    <!-- 信息窗口 -->
+                                </Grid.RowDefinitions>
+
+                                <!-- 标题部分 -->
+                                <Border Background="LightSlateGray" CornerRadius="5" Padding="5" Margin="0,0,0,10">
+                                    <TextBlock Text="投注页面"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- 内容区域 -->
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2.5*"/>
+                                        <!-- 比赛列表 -->
+                                        <ColumnDefinition Width="2.5*"/>
+                                        <!-- 账号池 -->
+                                        <ColumnDefinition Width="3*"/>
+                                        <!-- 管理窗口 -->
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 比赛列表 -->
+                                    <GroupBox Header="比赛列表" FontSize="16" FontWeight="Bold" Margin="10" Padding="10" Grid.Column="0">
+                                        <Grid>
+                                            <ListView Margin="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                                                <ListView.View>
+                                                    <GridView>
+                                                        <GridViewColumn Header="比赛名称" Width="150"/>
+                                                        <GridViewColumn Header="时间" Width="100"/>
+                                                        <GridViewColumn Header="状态" Width="80"/>
+                                                    </GridView>
+                                                </ListView.View>
+                                            </ListView>
+                                        </Grid>
+                                    </GroupBox>
+
+                                    <!-- 账号池 -->
+                                    <GroupBox Header="账号池" FontSize="16" FontWeight="Bold" Margin="10" Padding="10" Grid.Column="1">
+                                        <Grid>
+                                            <ListView Margin="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                                                <ListView.View>
+                                                    <GridView>
+                                                        <GridViewColumn Header="账号" Width="150"/>
+                                                        <GridViewColumn Header="密码" Width="150"/>
+                                                        <GridViewColumn Header="状态" Width="100"/>
+                                                    </GridView>
+                                                </ListView.View>
+                                            </ListView>
+                                        </Grid>
+                                    </GroupBox>
+
+                                    <!-- 管理窗口 -->
+                                    <GroupBox Header="管理窗口" FontSize="16" FontWeight="Bold" Margin="10" Padding="10" Grid.Column="2">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <!-- 投注操作 -->
+                                                <RowDefinition Height="Auto"/>
+                                                <!-- 比赛列表操作 -->
+                                                <RowDefinition Height="Auto"/>
+                                                <!-- 账号池操作 -->
+                                            </Grid.RowDefinitions>
+
+                                            <!-- 投注操作 -->
+                                            <GroupBox Header="投注操作" FontSize="14" Margin="0,0,0,10" Padding="10" Grid.Row="0">
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                        <TextBlock Text="比赛名称：" FontSize="14" Margin="0,5"/>
+                                                        <TextBox IsReadOnly="True" Width="200" Margin="5,0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                        <TextBlock Text="比赛时间：" FontSize="14" Margin="0,5"/>
+                                                        <TextBox IsReadOnly="True" Width="200" Margin="5,0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                        <TextBlock Text="当前赔率：" FontSize="14" Margin="0,5"/>
+                                                        <TextBox IsReadOnly="True" Width="100" Margin="5,0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                        <TextBlock Text="投注金额：" FontSize="14" Margin="0,5"/>
+                                                        <TextBox Width="100" Margin="5,0"/>
+                                                    </StackPanel>
+                                                    <Separator Margin="0,10"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                        <TextBlock Text="潜在收益：" FontSize="14" Margin="0,5"/>
+                                                        <TextBox IsReadOnly="True" Width="200" Margin="5,0"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </GroupBox>
+
+                                            <!-- 比赛列表操作 -->
+                                            <GroupBox Header="比赛列表操作" FontSize="14" Margin="0,0,0,10" Padding="10" Grid.Row="1">
+                                                <StackPanel Orientation="Vertical">
+                                                    <Button Content="筛选比赛" Width="120" Height="30" Margin="5"/>
+                                                    <Button Content="刷新列表" Width="120" Height="30" Margin="5"/>
+                                                    <Button Content="导出列表" Width="120" Height="30" Margin="5"/>
+                                                </StackPanel>
+                                            </GroupBox>
+
+                                            <!-- 账号池操作 -->
+                                            <GroupBox Header="账号池操作" FontSize="14" Margin="0,0,0,0" Padding="10" Grid.Row="2">
+                                                <StackPanel Orientation="Vertical">
+                                                    <Button Content="新增账号" Width="120" Height="30" Margin="5"/>
+                                                    <Button Content="编辑账号" Width="120" Height="30" Margin="5"/>
+                                                    <Button Content="删除账号" Width="120" Height="30" Margin="5"/>
+                                                    <Button Content="批量导入账号" Width="120" Height="30" Margin="5"/>
+                                                </StackPanel>
+                                            </GroupBox>
+                                        </Grid>
+                                    </GroupBox>
+                                </Grid>
+
+                                <!-- 信息窗口 -->
+                                <GroupBox Header="信息窗口" FontSize="16" FontWeight="Bold" Margin="10,0,10,10" Padding="10" Grid.Row="2">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <TextBlock Text="这里可以发布信息，例如当前系统状态、通知或错误提示。" TextWrapping="Wrap"/>
+                                    </ScrollViewer>
+                                </GroupBox>
                             </Grid>
                         </TabItem>
+
+
+
+
+
+
+
+
+
+
+
+
 
                         <!-- 投注记录子标签 -->
                         <TabItem Header="投注记录">

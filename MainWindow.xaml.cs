@@ -21,8 +21,8 @@ namespace AutoBet
 {
     public partial class MainWindow : Window
     {
-        private const string Server1Url = "http://localhost:5000/today_fixtures";
-        private const string Server2Url = "http://localhost:5001/matches";
+        private const string Server1Url = "http://154.86.116.11:5000/today_fixtures";
+        private const string Server2Url = "http://160.25.20.81:5001/matches";
         private string selectedDataSource1 = null;
         private string selectedDataSource2 = null;
         // 在 MainWindow 类内添加以下字段
@@ -561,7 +561,7 @@ namespace AutoBet
                 LoadingOverlay.Visibility = Visibility.Visible;
 
                 using var client = new HttpClient();
-                client.BaseAddress = new Uri("http://localhost:8080/api/"); // Java服务器地址
+                client.BaseAddress = new Uri("http://160.25.20.123:8080/api/"); // Java服务器地址
 
                 // 构造 BindingDTO 列表，并设置数据来源
                 var bindingDtos = _pairedMatches.Select(pm => new BindingDTO
@@ -672,7 +672,7 @@ namespace AutoBet
             try
             {
                 using var client = new HttpClient();
-                client.BaseAddress = new Uri("http://localhost:8080/api/"); // API 基础地址
+                client.BaseAddress = new Uri("http://160.25.20.123:8080/api/"); // API 基础地址
 
                 var response = await client.GetAsync("bindings"); // 假设 API 路径为 /bindings
 
@@ -745,7 +745,7 @@ namespace AutoBet
                         try
                         {
                             using var client = new HttpClient();
-                            client.BaseAddress = new Uri("http://localhost:8080/api/");
+                            client.BaseAddress = new Uri("http://160.25.20.123:8080/api/");
 
                             var response = await client.DeleteAsync($"bindings/{bindingId}");
 
